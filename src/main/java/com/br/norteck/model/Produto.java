@@ -33,10 +33,7 @@ public class Produto {
     @JoinColumn(name = "categoria_id")
     private Categoria categoria;
 
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(name = "tb_produto_ingrediente",
-            joinColumns = @JoinColumn(name = "produto_id"),
-            inverseJoinColumns = @JoinColumn(name = "ingrediente_do_produto_id"))
+    @OneToMany( mappedBy = "produto",cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private List<IngredienteDoProduto> produtoDosIngredientes = new ArrayList<>();
 
     public Produto() {
@@ -123,25 +120,29 @@ public class Produto {
 
     public BigDecimal calcularCustoProduto() {
         BigDecimal custoTotal = BigDecimal.ZERO;
+
         if (produtoDosIngredientes != null) {
-            for (IngredienteDoProduto ingredientes : produtoDosIngredientes) {
-                if(ingredientes.getIngredientes() != null && !ingredientes.getIngredientes().isEmpty()){
-                    BigDecimal custoIngrediente = ingredientes.getIngredientes().getFirst().getCusto()
-                            .multiply(ingredientes.getQuantidade());
-                custoTotal = custoTotal.add(custoIngrediente);
+            for (IngredienteDoProduto item : produtoDosIngredientes) {
+                Ingrediente ingrediente = item.getIngrediente();
+                if (ingrediente != null) {
+                    BigDecimal custoIngrediente = ingrediente.getCusto()
+                            .multiply(item.getQuantidade());
+                    custoTotal = custoTotal.add(custoIngrediente);
                 }
             }
         }
+
         this.custo = custoTotal.setScale(2, RoundingMode.HALF_DOWN);
-        return custoTotal;
+        return this.custo;
     }
 
     public BigDecimal calcularVendaProduto() {
         BigDecimal custoProduto = calcularCustoProduto();
-        BigDecimal margem = custoProduto.multiply(new BigDecimal("0.25"));
+        BigDecimal margem = custoProduto.multiply(new BigDecimal("0.25")); // margem de 25%
         this.venda = custoProduto.add(margem).setScale(2, RoundingMode.HALF_DOWN);
         return this.venda;
     }
+
 
 
 }

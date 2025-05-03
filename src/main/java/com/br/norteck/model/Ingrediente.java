@@ -25,7 +25,7 @@ public class Ingrediente {
     private BigDecimal venda = BigDecimal.ZERO;
 
     @Enumerated(EnumType.STRING)
-    @Column( name = "unit"  ,nullable = false, length = 2, columnDefinition = "varchar(2) default 'UN'")
+    @Column(name = "unit", nullable = false, length = 2, columnDefinition = "varchar(2) default 'UN'")
     private UnitOfMesaure unidadeDeMedida;
 
     @ManyToMany(mappedBy = "ingredientes")
@@ -43,11 +43,9 @@ public class Ingrediente {
     )
     private List<ItemEntradaDeNota> goodsReceiptItens = new ArrayList<>();
 
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(name = "tb_ingrediente_produto",
-    joinColumns = @JoinColumn(name = "ingrediente_id"),
-    inverseJoinColumns = @JoinColumn(name = "item_do_produto_id"))
-    private List<IngredienteDoProduto> ingredienteDosProdutos = new ArrayList<>();
+    @OneToMany(mappedBy = "ingrediente", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<IngredienteDoProduto> produtos = new ArrayList<>();
+
 
     public Ingrediente() {
     }
@@ -152,14 +150,11 @@ public class Ingrediente {
         this.categoria = categoria;
     }
 
-    public List<IngredienteDoProduto> getIngredienteDosProdutos() {
-        return ingredienteDosProdutos;
+    public List<IngredienteDoProduto> getProdutos() {
+        return produtos;
     }
 
-    public void setIngredienteDosProdutos(List<IngredienteDoProduto> ingredienteDosProdutos) {
-        this.ingredienteDosProdutos = ingredienteDosProdutos;
+    public void setProdutos(List<IngredienteDoProduto> produtos) {
+        this.produtos = produtos;
     }
-
-
-
 }

@@ -16,7 +16,9 @@ import com.br.norteck.repository.ProdutoRepository;
 import com.br.norteck.service.util.MessageError;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -33,6 +35,7 @@ public class ProdutoService {
     @Autowired
     private IngredienteDoProdutoRepository ingredienteDoProdutoRepository;
 
+    @Transactional
     public ResponseProdutoDTO save(RequestProdutoDTO produtoDTO) {
         produtoRepository.findByNomeIgnoreCase(produtoDTO.nome()).ifPresent(
                 p -> {
@@ -45,40 +48,48 @@ public class ProdutoService {
         Categoria categoria = categoriaRepository.findById(produtoDTO.idCategoria())
                 .orElseThrow(() -> new EntityNotFoundException(String.format(MessageError.OBJECT_NOT_FOUND_BY_ID, "Categoria", produtoDTO.idCategoria())));
 
+        if (produtoDTO.nome() == null || produtoDTO.codigo() == null) {
+            throw new IllegalArgumentException("Nome e código do produto não podem ser nulos.");
+        }
+
+
         Produto produto = new Produto();
         produto.setCodigo(produtoDTO.codigo());
         produto.setNome(produtoDTO.nome());
         produto.setDescricao(produtoDTO.descricao());
         produto.setCategoria(categoria);
 
-        var produtoSalvo = produtoRepository.save(produto);
+        System.out.println("salvou");
+        Produto produtoSalvo = produtoRepository.save(produto);
 
-        List<IngredienteDoProduto> ingredientes = produtoDTO.ingredientes().stream()
-                .map(ingredienteDTO -> {
-                    Ingrediente ingrediente = ingredienteRepository.findById(ingredienteDTO.idIngrediente())
-                            .orElseThrow(() -> new EntityNotFoundException(String.format(MessageError.OBJECT_NOT_FOUND_BY_ID, "Ingrediente", ingredienteDTO.idIngrediente())));
+        System.out.println("produto slvo");
+        List<IngredienteDoProduto> ingredientesDoProduto = produtoDTO.ingredientes()
+                .stream().map(dto -> {
+                    Ingrediente ingrediente = ingredienteRepository.findById(dto.idIngrediente())
+                            .orElseThrow(() -> new EntityNotFoundException(String.format(MessageError.OBJECT_NOT_FOUND_BY_ID, "Ingredientes", dto.idIngrediente())));
 
+                    System.out.println("antes do igrediente do produto");
                     IngredienteDoProduto ingredienteDoProduto = new IngredienteDoProduto();
-                    ingredienteDoProduto.getIngredientes().add(ingrediente);
-                    ingredienteDoProduto.setProdutos(List.of(produtoSalvo));
-                    ingredienteDoProduto.setQuantidade(produtoDTO.ingredientes().getFirst().quantidade());
-
-                    ingrediente.getIngredienteDosProdutos().add(ingredienteDoProduto);
-
+                    ingredienteDoProduto.setQuantidade(dto.quantidade());
+                    ingredienteDoProduto.setIngrediente(ingrediente);
+                   ingredienteDoProduto.setProduto(produtoSalvo);
                     return ingredienteDoProduto;
                 }).collect(Collectors.toList());
+        System.out.println("rigrendiete sucesso");
+        produtoSalvo.setProdutoDosIngredientes(ingredientesDoProduto);
 
-        produtoSalvo.setProdutoDosIngredientes(ingredientes);
         produtoSalvo.calcularCustoProduto();
         produtoSalvo.calcularVendaProduto();
+
+
         return convertObjectToDto(produtoRepository.save(produtoSalvo));
 
     }
 
     private ResponseProdutoDTO convertObjectToDto(Produto produto) {
-        List<RequestIngredienteDoProduto> ingrediente = (List<RequestIngredienteDoProduto>) produto.getProdutoDosIngredientes()
-                .stream().map(i -> new RequestIngredienteDoProduto(i.getIngredientes().getFirst().getId(),
-                        i.getQuantidade()));
+        List<RequestIngredienteDoProduto> ingrediente = produto.getProdutoDosIngredientes()
+                .stream().map(i -> new RequestIngredienteDoProduto(i.getIngrediente().getId(),
+                        i.getQuantidade())).collect(Collectors.toList());
 
         RequestProdutoDTO requestProdutoDTO = new RequestProdutoDTO(produto.getCodigo(),
                 produto.getNome(), produto.getDescricao(), produto.getCusto(), produto.getVenda(), ingrediente

@@ -17,19 +17,20 @@ public class IngredienteDoProduto {
     @Column(precision = 18, scale = 2)
     private BigDecimal quantidade = BigDecimal.ZERO;
 
-    @ManyToMany(mappedBy = "ingredienteDosProdutos",cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    private List<Ingrediente> ingredientes = new ArrayList<>();
+    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinColumn(name = "ingrediente_id")
+    private Ingrediente ingrediente;
 
-    @ManyToMany(mappedBy = "produtoDosIngredientes",cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    private List<Produto> produtos = new ArrayList<>();
+    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinColumn(name = "produto_id")
+    private Produto produto;
 
     public IngredienteDoProduto(){}
 
-    public IngredienteDoProduto(BigDecimal quantidade, List<Ingrediente> ingredientes,
-                                List<Produto> produtos) {
+    public IngredienteDoProduto(BigDecimal quantidade, Ingrediente ingrediente, Produto produto) {
         this.quantidade = quantidade;
-        this.ingredientes = ingredientes;
-        this.produtos = produtos;
+        this.ingrediente = ingrediente;
+        this.produto = produto;
     }
 
     public Integer getId() {
@@ -44,21 +45,19 @@ public class IngredienteDoProduto {
         this.quantidade = quantidade;
     }
 
-    public List<Ingrediente> getIngredientes() {
-        return ingredientes;
+    public Ingrediente getIngrediente() {
+        return ingrediente;
     }
 
-    public void setIngredientes(List<Ingrediente> ingredientes) {
-        this.ingredientes = ingredientes;
+    public void setIngrediente(Ingrediente ingrediente) {
+        this.ingrediente = ingrediente;
     }
 
-    public List<Produto> getProdutos() {
-        return produtos;
+    public Produto getProduto() {
+        return produto;
     }
 
-    public void setProdutos(List<Produto> produtos) {
-        this.produtos = produtos;
+    public void setProduto(Produto produto) {
+        this.produto = produto;
     }
-
-
 }
