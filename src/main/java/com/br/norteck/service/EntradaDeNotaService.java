@@ -203,7 +203,7 @@ public class EntradaDeNotaService {
 
         // Para cada item, ajustar o estoque e restaurar valores anteriores
         for (ItemEntradaDeNota item : entradaDeNota.getGoodsReceiptItemList()) {
-            Ingrediente ingrediente = item.getIngredients().get(0);
+            Ingrediente ingrediente = item.getIngredients().getFirst();
 
             // Remover a quantidade do estoque
             ingrediente.setEstoque(ingrediente.getEstoque().subtract(item.getQuantidade()));
@@ -227,7 +227,7 @@ public class EntradaDeNotaService {
 
     private void validateStockForDeletion(EntradaDeNota entradaDeNota) {
         for (ItemEntradaDeNota item : entradaDeNota.getGoodsReceiptItemList()) {
-            Ingrediente ingrediente = item.getIngredients().get(0);
+            Ingrediente ingrediente = item.getIngredients().getFirst();
 
             // Verificar se há estoque suficiente para remover a quantidade
             if (ingrediente.getEstoque().compareTo(item.getQuantidade()) < 0) {
@@ -241,7 +241,7 @@ public class EntradaDeNotaService {
     private ResponseGoodsReceiptDTO convertObjectToDto(EntradaDeNota entradaDeNota) {
         List<ResponseGoodsReceiptItemDTO> itemDTOS = entradaDeNota.getGoodsReceiptItemList()
                 .stream().map(item -> {
-                    String ingredientName = item.getIngredients().isEmpty() ? "" : item.getIngredients().get(0).getNome();
+                    String ingredientName = item.getIngredients().isEmpty() ? "" : item.getIngredients().getFirst().getNome();
 
                     return new ResponseGoodsReceiptItemDTO(
                             ingredientName, item.getQuantidade(), item.getCusto(), item.getVenda()
@@ -265,7 +265,7 @@ public class EntradaDeNotaService {
     private void validateStockChanges(EntradaDeNota existingEntradaDeNota, RequestEntradaDeNotaDto newGoodsReceiptDto) {
         // Para cada 'item' existente, verificar se a nova quantidade é menor que a diferença no estoque
         for (ItemEntradaDeNota existingItem : existingEntradaDeNota.getGoodsReceiptItemList()) {
-            Ingrediente ingrediente = existingItem.getIngredients().get(0);
+            Ingrediente ingrediente = existingItem.getIngredients().getFirst();
 
             // Encontrar o item correspondente no DTO (se existir)
             var matchingNewItem = newGoodsReceiptDto.itens().stream()
@@ -302,7 +302,7 @@ public class EntradaDeNotaService {
     private void removeExistingItemsAndAdjustStock(EntradaDeNota entradaDeNota) {
         // Para cada item existente, remover do estoque e deletar
         for (ItemEntradaDeNota item : entradaDeNota.getGoodsReceiptItemList()) {
-            Ingrediente ingrediente = item.getIngredients().get(0);
+            Ingrediente ingrediente = item.getIngredients().getFirst();
             ingrediente.setEstoque(ingrediente.getEstoque().subtract(item.getQuantidade()));
 
             // Remover a referência do ingrediente para o 'item'

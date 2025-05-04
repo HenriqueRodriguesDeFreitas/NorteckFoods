@@ -1,6 +1,5 @@
 package com.br.norteck.service;
 
-import com.br.norteck.dtos.request.RequestIngredienteDoProduto;
 import com.br.norteck.dtos.request.RequestProdutoDTO;
 import com.br.norteck.dtos.response.ResponseIngredienteDoProdutoDTO;
 import com.br.norteck.dtos.response.ResponseProdutoDTO;
@@ -10,16 +9,17 @@ import com.br.norteck.model.Categoria;
 import com.br.norteck.model.Ingrediente;
 import com.br.norteck.model.IngredienteDoProduto;
 import com.br.norteck.model.Produto;
-import com.br.norteck.model.enums.UnitOfMesaure;
 import com.br.norteck.repository.CategoriaRepository;
 import com.br.norteck.repository.IngredienteDoProdutoRepository;
 import com.br.norteck.repository.IngredienteRepository;
 import com.br.norteck.repository.ProdutoRepository;
 import com.br.norteck.service.util.MessageError;
+import org.aspectj.bridge.Message;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -60,36 +60,105 @@ public class ProdutoService {
         produto.setDescricao(produtoDTO.descricao());
         produto.setCategoria(categoria);
 
-        System.out.println("salvou");
         Produto produtoSalvo = produtoRepository.save(produto);
 
-        System.out.println("produto slvo");
         List<IngredienteDoProduto> ingredientesDoProduto = produtoDTO.ingredientes()
                 .stream().map(dto -> {
                     Ingrediente ingrediente = ingredienteRepository.findById(dto.idIngrediente())
                             .orElseThrow(() -> new EntityNotFoundException(String.format(MessageError.OBJECT_NOT_FOUND_BY_ID, "Ingredientes", dto.idIngrediente())));
 
-                    System.out.println("antes do igrediente do produto");
                     IngredienteDoProduto ingredienteDoProduto = new IngredienteDoProduto();
                     ingredienteDoProduto.setQuantidade(dto.quantidade());
                     ingredienteDoProduto.setIngrediente(ingrediente);
-                   ingredienteDoProduto.setProduto(produtoSalvo);
+                    ingredienteDoProduto.setProduto(produtoSalvo);
                     return ingredienteDoProduto;
                 }).collect(Collectors.toList());
-        System.out.println("rigrendiete sucesso");
+
         produtoSalvo.setProdutoDosIngredientes(ingredientesDoProduto);
 
-        produtoSalvo.calcularCustoProduto();
-        produtoSalvo.calcularVendaProduto();
+        if (produtoDTO.custo().compareTo(BigDecimal.ZERO) <= 0) {
+            produtoSalvo.calcularCustoProduto();
+        } else{
+            produtoSalvo.setCusto(produtoDTO.custo());
+        }
 
+        if (produtoDTO.venda().compareTo(BigDecimal.ZERO) <= 0) {
+            produtoSalvo.calcularVendaProduto();
+        } else {
+            produtoSalvo.setVenda(produtoDTO.venda());
+        }
 
         return convertObjectToDto(produtoRepository.save(produtoSalvo));
 
     }
 
-    public List<ResponseProdutoDTO> findAll(){
+    public List<ResponseProdutoDTO> findAll() {
         return produtoRepository.findAll().stream()
                 .map(this::convertObjectToDto).collect(Collectors.toList());
+    }
+
+    public List<ResponseProdutoDTO> findByNameContaining(String nomeProduto) {
+        return produtoRepository.findByNomeContainingIgnoreCase(nomeProduto)
+                .stream().map(this::convertObjectToDto).collect(Collectors.toList());
+    }
+
+    public ResponseProdutoDTO findByCodigo(Long codigo) {
+        return convertObjectToDto(produtoRepository.findByCodigo(codigo)
+                .orElseThrow(() -> new EntityNotFoundException("Produto com esse codigo não encontrado")));
+    }
+
+    @Transactional
+    public ResponseProdutoDTO update(Integer id, RequestProdutoDTO produtoDTO) {
+        Produto produto = produtoRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException(String.format(MessageError.OBJECT_NOT_FOUND_BY_ID, "Produto", id)));
+
+        produtoRepository.findByNomeIgnoreCase(produtoDTO.nome()).ifPresent(
+                p -> {
+                    throw new ConflictException(String.format(MessageError.OBJECT_NOT_EXISTS_WITH_NAME, "Produto", produtoDTO.nome()));
+                });
+
+        Categoria categoria = categoriaRepository.findById(produtoDTO.idCategoria())
+                .orElseThrow(() -> new EntityNotFoundException(String.format(MessageError.OBJECT_NOT_FOUND_BY_ID, "Categoria", produtoDTO.idCategoria())));
+
+        produto.setNome(produtoDTO.nome());
+        produto.setDescricao(produtoDTO.descricao());
+        produto.setCategoria(categoria);
+
+        ingredienteDoProdutoRepository.deleteByProdutoId(produto.getId());
+
+        List<IngredienteDoProduto> ingredientes = produtoDTO.ingredientes()
+                .stream().map(dto -> {
+                    Ingrediente ingrediente = ingredienteRepository.findById(dto.idIngrediente())
+                            .orElseThrow(() -> new EntityNotFoundException(String.format(MessageError.OBJECT_NOT_FOUND_BY_ID, "Ingrediente", produtoDTO.ingredientes().getFirst().idIngrediente())));
+
+                    IngredienteDoProduto ingredienteDoProduto = new IngredienteDoProduto();
+                    ingredienteDoProduto.setQuantidade(dto.quantidade());
+                    ingredienteDoProduto.setIngrediente(ingrediente);
+                    ingredienteDoProduto.setProduto(produto);
+                    return ingredienteDoProduto;
+                }).collect(Collectors.toList());
+        produto.setProdutoDosIngredientes(ingredientes);
+
+        if (produtoDTO.custo().compareTo(BigDecimal.ZERO) <= 0) {
+            produto.calcularCustoProduto();
+        }else{
+        produto.setCusto(produtoDTO.custo());
+        }
+
+        if (produtoDTO.venda().compareTo(BigDecimal.ZERO) <= 0) {
+            produto.calcularVendaProduto();
+        }else{
+        produto.setVenda(produtoDTO.venda());
+        }
+
+        return convertObjectToDto(produtoRepository.save(produto));
+    }
+
+    public void deleteById(Integer id) {
+        if (produtoRepository.findById(id).isEmpty()) {
+            throw new EntityNotFoundException(String.format(MessageError.OBJECT_NOT_FOUND_BY_ID, "Produto", id));
+        }
+        produtoRepository.deleteById(id);
     }
 
     private ResponseProdutoDTO convertObjectToDto(Produto produto) {
@@ -99,8 +168,9 @@ public class ProdutoService {
 
         ResponseProdutoDTO responseProdutoDTO = new ResponseProdutoDTO(produto.getId(), produto.getCodigo(),
                 produto.getNome(), produto.getDescricao(), produto.getCusto(), produto.getVenda(), ingrediente
-                , produto.getEstoque(),produto.getCategoria().getId());
+                , produto.getEstoque(), produto.getCategoria().getId());
 
         return responseProdutoDTO;
     }
+
 }
