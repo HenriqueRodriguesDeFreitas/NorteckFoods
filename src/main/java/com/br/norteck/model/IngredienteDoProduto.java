@@ -14,7 +14,7 @@ public class IngredienteDoProduto {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(precision = 18, scale = 2)
+    @Column(precision = 18, scale = 3)
     private BigDecimal quantidade = BigDecimal.ZERO;
 
     @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})

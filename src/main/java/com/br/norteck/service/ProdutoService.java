@@ -2,6 +2,7 @@ package com.br.norteck.service;
 
 import com.br.norteck.dtos.request.RequestIngredienteDoProduto;
 import com.br.norteck.dtos.request.RequestProdutoDTO;
+import com.br.norteck.dtos.response.ResponseIngredienteDoProdutoDTO;
 import com.br.norteck.dtos.response.ResponseProdutoDTO;
 import com.br.norteck.exceptions.ConflictException;
 import com.br.norteck.exceptions.EntityNotFoundException;
@@ -9,6 +10,7 @@ import com.br.norteck.model.Categoria;
 import com.br.norteck.model.Ingrediente;
 import com.br.norteck.model.IngredienteDoProduto;
 import com.br.norteck.model.Produto;
+import com.br.norteck.model.enums.UnitOfMesaure;
 import com.br.norteck.repository.CategoriaRepository;
 import com.br.norteck.repository.IngredienteDoProdutoRepository;
 import com.br.norteck.repository.IngredienteRepository;
@@ -18,7 +20,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -86,15 +87,20 @@ public class ProdutoService {
 
     }
 
+    public List<ResponseProdutoDTO> findAll(){
+        return produtoRepository.findAll().stream()
+                .map(this::convertObjectToDto).collect(Collectors.toList());
+    }
+
     private ResponseProdutoDTO convertObjectToDto(Produto produto) {
-        List<RequestIngredienteDoProduto> ingrediente = produto.getProdutoDosIngredientes()
-                .stream().map(i -> new RequestIngredienteDoProduto(i.getIngrediente().getId(),
-                        i.getQuantidade())).collect(Collectors.toList());
+        List<ResponseIngredienteDoProdutoDTO> ingrediente = produto.getProdutoDosIngredientes()
+                .stream().map(i -> new ResponseIngredienteDoProdutoDTO(i.getIngrediente().getId(),
+                        i.getIngrediente().getNome(), i.getQuantidade(), i.getIngrediente().getUnidadeDeMedida().name())).collect(Collectors.toList());
 
-        RequestProdutoDTO requestProdutoDTO = new RequestProdutoDTO(produto.getCodigo(),
+        ResponseProdutoDTO responseProdutoDTO = new ResponseProdutoDTO(produto.getId(), produto.getCodigo(),
                 produto.getNome(), produto.getDescricao(), produto.getCusto(), produto.getVenda(), ingrediente
-                , produto.getCategoria().getId());
+                , produto.getEstoque(),produto.getCategoria().getId());
 
-        return new ResponseProdutoDTO(produto.getId(), requestProdutoDTO, produto.getEstoque());
+        return responseProdutoDTO;
     }
 }
