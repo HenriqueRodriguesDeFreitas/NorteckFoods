@@ -36,6 +36,9 @@ public class Produto {
     @OneToMany( mappedBy = "produto",cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private List<IngredienteDoProduto> produtoDosIngredientes = new ArrayList<>();
 
+    @OneToMany(mappedBy = "produto")
+    private List<Pedido> pedidos;
+
     public Produto() {
     }
 
