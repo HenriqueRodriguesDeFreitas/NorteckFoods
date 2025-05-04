@@ -20,6 +20,11 @@ public class Pagamento {
     @Column(precision = 18, scale = 2)
     private BigDecimal valor = BigDecimal.ZERO;
 
+    @ManyToOne
+    @JoinColumn(name = "pedido_id", nullable = false)
+    private Pedido pedido;
+
+
     public Pagamento(){}
 
     public Pagamento(TipoPagamento tipoPagamento, BigDecimal valor) {

@@ -25,4 +25,40 @@ public class ItemPedido {
     @ManyToOne
     @JoinColumn(name = "pedido_id")
     private Pedido pedido;
+
+    public ItemPedido(){}
+
+    public ItemPedido(Integer quantidade, Produto produto, Pedido pedido) {
+        this.quantidade = quantidade;
+        this.produto = produto;
+        this.pedido = pedido;
+    }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public Integer getQuantidade() {
+        return quantidade;
+    }
+
+    public void setQuantidade(Integer quantidade) {
+        this.quantidade = quantidade;
+    }
+
+    public Produto getProduto() {
+        return produto;
+    }
+
+    public void setProduto(Produto produto) {
+        this.produto = produto;
+    }
+
+    public Pedido getPedido() {
+        return pedido;
+    }
+
+    public void setPedido(Pedido pedido) {
+        this.pedido = pedido;
+    }
 }

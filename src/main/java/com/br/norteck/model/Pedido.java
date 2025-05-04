@@ -4,9 +4,8 @@ import com.br.norteck.model.enums.StatusPedido;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,7 +17,7 @@ public class Pedido {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-  @Column(name = "emissao",nullable = false)
+    @Column(name = "emissao", nullable = false)
     private LocalDateTime dataHoraEmissao;
 
     @Column(length = 500)
@@ -32,6 +31,88 @@ public class Pedido {
 
     @OneToMany(mappedBy = "pedido")
     private List<ItemPedido> itensPedido = new ArrayList<>();
+
+    @OneToMany(mappedBy = "pedido")
     private List<Pagamento> pagamentos = new ArrayList<>();
 
+    public Pedido() {
+    }
+
+    public Pedido(String observacao, BigDecimal total, StatusPedido statusPedido, List<ItemPedido> itensPedido, List<Pagamento> pagamentos) {
+        this.dataHoraEmissao = LocalDateTime.now();
+        this.observacao = observacao;
+        this.total = total;
+        this.statusPedido = statusPedido;
+        this.itensPedido = itensPedido;
+        this.pagamentos = pagamentos;
+    }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public LocalDateTime getDataHoraEmissao() {
+        return dataHoraEmissao;
+    }
+
+    public void setDataHoraEmissao() {
+        this.dataHoraEmissao = LocalDateTime.now();
+    }
+
+    public String getObservacao() {
+        return observacao;
+    }
+
+    public void setObservacao(String observacao) {
+        this.observacao = observacao;
+    }
+
+    public BigDecimal getTotal() {
+        return total;
+    }
+
+    public void setTotal(BigDecimal total) {
+        this.total = total;
+    }
+
+    public StatusPedido getStatusPedido() {
+        return statusPedido;
+    }
+
+    public void setStatusPedido(StatusPedido statusPedido) {
+        this.statusPedido = statusPedido;
+    }
+
+    public List<ItemPedido> getItensPedido() {
+        return itensPedido;
+    }
+
+    public void setItensPedido(List<ItemPedido> itensPedido) {
+        this.itensPedido = itensPedido;
+    }
+
+    public List<Pagamento> getPagamentos() {
+        return pagamentos;
+    }
+
+    public void setPagamentos(List<Pagamento> pagamentos) {
+        this.pagamentos = pagamentos;
+    }
+
+    public BigDecimal calcularTotal() {
+        BigDecimal totalPedido = BigDecimal.ZERO;
+
+        if (itensPedido != null) {
+            for (ItemPedido itemPedido : itensPedido) {
+                Produto produto = itemPedido.getProduto();
+                if (produto != null) {
+                    BigDecimal total = produto.getVenda()
+                            .multiply(BigDecimal.valueOf(itemPedido.getQuantidade()));
+                    totalPedido = totalPedido.add(total);
+                }
+            }
+        }
+        this.total = totalPedido.setScale(2, RoundingMode.HALF_DOWN);
+        return this.total;
+    }
 }
