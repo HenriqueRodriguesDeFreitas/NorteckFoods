@@ -138,7 +138,7 @@ public class OperacaoCaixa {
         this.statusCaixa = statusCaixa;
     }
 
-    public void atuaizarTotais(){
+    public void atualizarTotais(){
         for (Pagamento p : pagamentos){
             switch (p.getTipoPagamento()){
                 case DINHEIRO -> this.saldoDinheiro = saldoDinheiro.add(p.getValor());

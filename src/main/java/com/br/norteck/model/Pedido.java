@@ -99,6 +99,7 @@ public class Pedido {
         this.pagamentos = pagamentos;
     }
 
+
     public BigDecimal calcularTotal() {
         BigDecimal totalPedido = BigDecimal.ZERO;
 

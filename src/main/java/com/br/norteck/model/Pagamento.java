@@ -56,4 +56,20 @@ public class Pagamento {
     public void setValor(BigDecimal valor) {
         this.valor = valor;
     }
+
+    public Pedido getPedido() {
+        return pedido;
+    }
+
+    public void setPedido(Pedido pedido) {
+        this.pedido = pedido;
+    }
+
+    public OperacaoCaixa getOperacaoCaixa() {
+        return operacaoCaixa;
+    }
+
+    public void setOperacaoCaixa(OperacaoCaixa operacaoCaixa) {
+        this.operacaoCaixa = operacaoCaixa;
+    }
 }

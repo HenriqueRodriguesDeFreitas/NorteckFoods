@@ -32,7 +32,7 @@ public class OperacaoCaixaService {
         novoCaixa.setDataAbertura();
         novoCaixa.setSaldoInicial(aberturaCaixaDTO.saldoInicial());
         novoCaixa.setStatusCaixa(StatusCaixa.ABERTO);
-        novoCaixa.atuaizarTotais();
+        novoCaixa.atualizarTotais();
         return convertObjectToDto(operacaoCaixaRepository.save(novoCaixa));
     }
 
@@ -46,7 +46,7 @@ public class OperacaoCaixaService {
                 .orElseThrow(()-> new EntityNotFoundException("Caixa não encontrado"));
         caixa.setDataFechamento(LocalDate.now());
         caixa.setStatusCaixa(StatusCaixa.FECHADO);
-        caixa.atuaizarTotais();
+        caixa.atualizarTotais();
         return convertObjectToDto2(operacaoCaixaRepository.save(caixa));
     }
 
@@ -65,7 +65,7 @@ public class OperacaoCaixaService {
         OperacaoCaixa caixaReabrir = ultimoCaixaFechado.get();
         caixaReabrir.setDataAbertura();
         caixaReabrir.setStatusCaixa(StatusCaixa.ABERTO);
-        caixaReabrir.atuaizarTotais();
+        caixaReabrir.atualizarTotais();
 
         return convertObjectToDto2(operacaoCaixaRepository.save(caixaReabrir));
     }
