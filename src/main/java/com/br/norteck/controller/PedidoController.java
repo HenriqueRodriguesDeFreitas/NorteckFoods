@@ -37,7 +37,7 @@ public class PedidoController {
         List<ResponsePedidoDTO> pedidoDTOS = pedidoService.findByPeriodo(inicio, fim);
         if (!pedidoDTOS.isEmpty()) {
             return ResponseEntity.ok(pedidoService.findByPeriodo(inicio, fim));
-        }else{
+        } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
     }

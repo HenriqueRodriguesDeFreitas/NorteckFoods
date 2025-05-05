@@ -17,7 +17,7 @@ public class IngredienteDoProduto {
     @Column(precision = 18, scale = 3)
     private BigDecimal quantidade = BigDecimal.ZERO;
 
-    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @ManyToOne()
     @JoinColumn(name = "ingrediente_id")
     private Ingrediente ingrediente;
 

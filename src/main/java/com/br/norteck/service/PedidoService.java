@@ -1,126 +1,154 @@
 package com.br.norteck.service;
 
-import com.br.norteck.dtos.request.RequestPagamentoPedidoDTO;
-import com.br.norteck.dtos.request.RequestPedidoDTO;
-import com.br.norteck.dtos.response.ResponseItemPedidoDTO;
-import com.br.norteck.dtos.response.ResponsePedidoDTO;
-import com.br.norteck.exceptions.EntityNotFoundException;
-import com.br.norteck.model.*;
-import com.br.norteck.model.enums.StatusCaixa;
-import com.br.norteck.model.enums.StatusPedido;
-import com.br.norteck.repository.OperacaoCaixaRepository;
-import com.br.norteck.repository.PedidoRepository;
-import com.br.norteck.repository.ProdutoRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.br.norteck.dtos.request.RequestPagamentoPedidoDTO;
+import com.br.norteck.dtos.request.RequestPedidoDTO;
+import com.br.norteck.dtos.response.ResponseItemPedidoDTO;
+import com.br.norteck.dtos.response.ResponsePedidoDTO;
+import com.br.norteck.exceptions.EntityNotFoundException;
+import com.br.norteck.model.Ingrediente;
+import com.br.norteck.model.IngredienteDoProduto;
+import com.br.norteck.model.ItemPedido;
+import com.br.norteck.model.OperacaoCaixa;
+import com.br.norteck.model.Pagamento;
+import com.br.norteck.model.Pedido;
+import com.br.norteck.model.Produto;
+import com.br.norteck.model.enums.StatusCaixa;
+import com.br.norteck.model.enums.StatusPedido;
+import com.br.norteck.repository.IngredienteRepository;
+import com.br.norteck.repository.OperacaoCaixaRepository;
+import com.br.norteck.repository.PedidoRepository;
+import com.br.norteck.repository.ProdutoRepository;
+
 @Service
 public class PedidoService {
 
-    @Autowired
-    private PedidoRepository pedidoRepository;
-    @Autowired
-    private ProdutoRepository produtoRepository;
-    @Autowired
-    private OperacaoCaixaRepository operacaoCaixaRepository;
+	@Autowired
+	private PedidoRepository pedidoRepository;
+	@Autowired
+	private ProdutoRepository produtoRepository;
+	@Autowired
+	private OperacaoCaixaRepository operacaoCaixaRepository;
+	@Autowired
+	private IngredienteRepository ingredienteRepository;
 
-    @Transactional
-    public ResponsePedidoDTO save(RequestPedidoDTO pedidoDTO) {
-        OperacaoCaixa caixaAtivo = operacaoCaixaRepository.findByStatusCaixa(StatusCaixa.ABERTO)
-                .orElseThrow(() -> new EntityNotFoundException("Não existem caixas abertos."));
+	@Transactional
+	public ResponsePedidoDTO save(RequestPedidoDTO pedidoDTO) {
+		OperacaoCaixa caixaAtivo = operacaoCaixaRepository.findByStatusCaixa(StatusCaixa.ABERTO)
+				.orElseThrow(() -> new EntityNotFoundException("Não existem caixas abertos."));
 
-        if (pedidoDTO.itens().isEmpty()) {
-            throw new EntityNotFoundException("Não é possivel criar um pedido sem nenhum item.");
-        }
-        Pedido pedido = new Pedido();
-        pedido.setStatusPedido(StatusPedido.ABERTO);
-        pedido.setObservacao(pedidoDTO.observacao());
-        pedido.setDataHoraEmissao();
+		if (pedidoDTO.itens().isEmpty()) {
+			throw new EntityNotFoundException("Não é possivel criar um pedido sem nenhum item.");
+		}
+		Pedido pedido = new Pedido();
+		pedido.setStatusPedido(StatusPedido.ABERTO);
+		pedido.setObservacao(pedidoDTO.observacao());
+		pedido.setDataHoraEmissao();
 
+		List<ItemPedido> itensPedido = processarItens(pedidoDTO, pedido);
+		if (itensPedido.isEmpty()) {
+			throw new EntityNotFoundException("Não é possivel criar pedido sem itens.");
+		}
+		pedido.setItensPedido(itensPedido);
 
-        List<ItemPedido> itensPedido = processarItens(pedidoDTO, pedido);
-        if (itensPedido.isEmpty()) {
-            throw new EntityNotFoundException("Não é possivel criar pedido sem itens.");
-        }
-        pedido.setItensPedido(itensPedido);
+		BigDecimal total = pedido.calcularTotal();
+		pedido.setTotal(total != null ? total : BigDecimal.ZERO);
 
-        BigDecimal total = pedido.calcularTotal();
-        pedido.setTotal(total != null ? total : BigDecimal.ZERO);
+		Pedido pedidoSalvo = pedidoRepository.save(pedido);
 
-        Pedido pedidoSalvo = pedidoRepository.save(pedido);
+		List<Pagamento> pagamentos = processarPagamentos(pedidoDTO, pedido, caixaAtivo);
+		pedidoSalvo.setPagamentos(pagamentos);
 
-        List<Pagamento> pagamentos = processarPagamentos(pedidoDTO, pedido, caixaAtivo);
-        pedidoSalvo.setPagamentos(pagamentos);
+		BigDecimal troco = pedidoSalvo.validarTotalPagamento(pagamentos, total);
 
-        BigDecimal troco = pedidoSalvo.validarTotalPagamento(pagamentos, total);
+		atualizarCaixa(caixaAtivo);
+		return convertObjectToDto(pedidoRepository.save(pedidoSalvo), troco);
+	}
 
-        atualizarCaixa(caixaAtivo);
-        return convertObjectToDto(pedidoRepository.save(pedidoSalvo), troco);
-    }
+	public List<ResponsePedidoDTO> findAll() {
+		return pedidoRepository.findAll().stream().map(this::convertObjectToDto).collect(Collectors.toList());
+	}
 
-    public List<ResponsePedidoDTO> findAll() {
-        return pedidoRepository.findAll().stream()
-                .map(this::convertObjectToDto).collect(Collectors.toList());
-    }
+	public List<ResponsePedidoDTO> findByPeriodo(LocalDateTime inicio, LocalDateTime fim) {
+		List<Pedido> pedidos = pedidoRepository.findByDataHoraEmissaoBetween(inicio, fim);
+		return pedidos.stream().map(this::convertObjectToDto).collect(Collectors.toList());
+	}
 
-    public List<ResponsePedidoDTO> findByPeriodo(LocalDateTime inicio, LocalDateTime fim) {
-        List<Pedido> pedidos = pedidoRepository.findByDataHoraEmissaoBetween(inicio, fim);
-        return pedidos.stream().map(this::convertObjectToDto).collect(Collectors.toList());
-    }
+	private ResponsePedidoDTO convertObjectToDto(Pedido pedido) {
+		return convertObjectToDto(pedido, BigDecimal.ZERO);
+	}
 
-    private ResponsePedidoDTO convertObjectToDto(Pedido pedido) {
-        return convertObjectToDto(pedido, BigDecimal.ZERO);
-    }
+	private ResponsePedidoDTO convertObjectToDto(Pedido pedido, BigDecimal troco) {
+		List<ResponseItemPedidoDTO> itemPedidoDTO = pedido.getItensPedido().stream().map(
+				p -> new ResponseItemPedidoDTO(p.getProduto().getNome(), p.getProduto().getVenda(), p.getQuantidade()))
+				.collect(Collectors.toList());
 
-    private ResponsePedidoDTO convertObjectToDto(Pedido pedido, BigDecimal troco) {
-        List<ResponseItemPedidoDTO> itemPedidoDTO = pedido.getItensPedido().stream()
-                .map(p -> new ResponseItemPedidoDTO(p.getProduto().getNome(),
-                        p.getProduto().getVenda(), p.getQuantidade())).collect(Collectors.toList());
+		List<RequestPagamentoPedidoDTO> pagamentoPedidoDTO = pedido.getPagamentos().stream()
+				.map(pg -> new RequestPagamentoPedidoDTO(pg.getTipoPagamento(), pg.getValor()))
+				.collect(Collectors.toList());
 
-        List<RequestPagamentoPedidoDTO> pagamentoPedidoDTO = pedido.getPagamentos().stream()
-                .map(pg -> new RequestPagamentoPedidoDTO(pg.getTipoPagamento(), pg.getValor())).collect(Collectors.toList());
+		return new ResponsePedidoDTO(pedido.getDataHoraEmissao(), itemPedidoDTO, pedido.getTotal(),
+				pedido.getStatusPedido(), pedido.getObservacao(), pagamentoPedidoDTO,
+				troco != null ? troco : BigDecimal.ZERO);
+	}
 
-        return new ResponsePedidoDTO(pedido.getDataHoraEmissao(), itemPedidoDTO, pedido.getTotal(),
-                pedido.getStatusPedido(), pedido.getObservacao(), pagamentoPedidoDTO, troco != null ? troco : BigDecimal.ZERO);
-    }
+	private List<ItemPedido> processarItens(RequestPedidoDTO pedidoDTO, Pedido pedido) {
+		return pedidoDTO.itens().stream().map(dto -> {
+			Produto produto = produtoRepository.findById(dto.idProduto())
+					.orElseThrow(() -> new EntityNotFoundException("Não existe produto com este id."));
 
-    private List<ItemPedido> processarItens(RequestPedidoDTO pedidoDTO, Pedido pedido) {
-        return pedidoDTO.itens().stream()
-                .map(dto -> {
-                    Produto produto = produtoRepository.findById(dto.idProduto())
-                            .orElseThrow(() -> new EntityNotFoundException("Não existe produto com este id."));
+			ItemPedido itemPedido = new ItemPedido();
+			itemPedido.setProduto(produto);
+			itemPedido.setQuantidade(dto.quantidade());
+			itemPedido.setPedido(pedido);
 
+			pedido.getItensPedido().add(itemPedido);
 
-                    ItemPedido itemPedido = new ItemPedido();
-                    itemPedido.setProduto(produto);
-                    itemPedido.setQuantidade(dto.quantidade());
-                    itemPedido.setPedido(pedido);
+			atualizarEstoqueIngrediente(produto, BigDecimal.valueOf(dto.quantidade()));
 
-                    pedido.getItensPedido().add(itemPedido);
-                    return itemPedido;
-                }).collect(Collectors.toList());
-    }
+			return itemPedido;
+		}).collect(Collectors.toList());
+	}
 
-    public List<Pagamento> processarPagamentos(RequestPedidoDTO pedidoDTO, Pedido pedido,
-                                               OperacaoCaixa operacaoCaixa) {
-        return pedidoDTO.pagamentos().stream().map(pagamentoDto -> {
-            Pagamento pagamento = new Pagamento();
-            pagamento.setPedido(pedido);
-            pagamento.setTipoPagamento(pagamentoDto.tipoPagamento());
-            pagamento.setValor(pagamentoDto.valor());
-            pagamento.setOperacaoCaixa(operacaoCaixa);
-            return pagamento;
-        }).collect(Collectors.toList());
-    }
+	private List<Pagamento> processarPagamentos(RequestPedidoDTO pedidoDTO, Pedido pedido,
+			OperacaoCaixa operacaoCaixa) {
+		return pedidoDTO.pagamentos().stream().map(pagamentoDto -> {
+			Pagamento pagamento = new Pagamento();
+			pagamento.setPedido(pedido);
+			pagamento.setTipoPagamento(pagamentoDto.tipoPagamento());
+			pagamento.setValor(pagamentoDto.valor());
+			pagamento.setOperacaoCaixa(operacaoCaixa);
+			return pagamento;
+		}).collect(Collectors.toList());
+	}
 
-    private void atualizarCaixa(OperacaoCaixa operacaoCaixa) {
-        operacaoCaixa.atualizarTotais();
-        operacaoCaixaRepository.save(operacaoCaixa);
-    }
+	private void atualizarCaixa(OperacaoCaixa operacaoCaixa) {
+		operacaoCaixa.atualizarTotais();
+		operacaoCaixaRepository.save(operacaoCaixa);
+	}
+
+	private void atualizarEstoqueIngrediente(Produto produto, BigDecimal quantidadeVendidaDoProduto) {
+		for (IngredienteDoProduto ingredienteDoProduto : produto.getProdutoDosIngredientes()) {
+			Ingrediente ingrediente = ingredienteDoProduto.getIngrediente();
+
+			BigDecimal quantidadeUsadaNaReceita = ingredienteDoProduto.getQuantidade();
+			BigDecimal quantidadeTotalUsada = quantidadeUsadaNaReceita.multiply(quantidadeVendidaDoProduto);
+
+			BigDecimal novoEstoque = ingrediente.getEstoque().subtract(quantidadeTotalUsada);
+
+			if (novoEstoque.compareTo(BigDecimal.ZERO) < 0) {
+				throw new RuntimeException("Produto com ingrediente insuficiente: " + ingrediente.getNome());
+			}
+			ingrediente.setEstoque(novoEstoque);
+			ingredienteRepository.save(ingrediente);
+		}
+	}
 }
