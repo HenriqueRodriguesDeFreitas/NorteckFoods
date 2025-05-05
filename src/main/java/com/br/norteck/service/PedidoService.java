@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -68,10 +69,14 @@ public class PedidoService {
                 .map(this::convertObjectToDto).collect(Collectors.toList());
     }
 
+    public List<ResponsePedidoDTO> findByPeriodo(LocalDateTime inicio, LocalDateTime fim) {
+        List<Pedido> pedidos = pedidoRepository.findByDataHoraEmissaoBetween(inicio, fim);
+        return pedidos.stream().map(this::convertObjectToDto).collect(Collectors.toList());
+    }
+
     private ResponsePedidoDTO convertObjectToDto(Pedido pedido) {
         return convertObjectToDto(pedido, BigDecimal.ZERO);
     }
-
 
     private ResponsePedidoDTO convertObjectToDto(Pedido pedido, BigDecimal troco) {
         List<ResponseItemPedidoDTO> itemPedidoDTO = pedido.getItensPedido().stream()
