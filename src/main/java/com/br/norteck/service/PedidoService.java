@@ -13,6 +13,7 @@ import com.br.norteck.repository.PedidoRepository;
 import com.br.norteck.repository.ProdutoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -28,8 +29,8 @@ public class PedidoService {
     @Autowired
     private OperacaoCaixaRepository operacaoCaixaRepository;
 
+    @Transactional
     public ResponsePedidoDTO save(RequestPedidoDTO pedidoDTO) {
-
         OperacaoCaixa caixaAtivo = operacaoCaixaRepository.findByStatusCaixa(StatusCaixa.ABERTO)
                 .orElseThrow(() -> new EntityNotFoundException("Não existem caixas abertos."));
 
@@ -41,28 +42,38 @@ public class PedidoService {
         pedido.setObservacao(pedidoDTO.observacao());
         pedido.setDataHoraEmissao();
 
-        Pedido pedidoSalvo = pedidoRepository.save(pedido);
 
         List<ItemPedido> itensPedido = processarItens(pedidoDTO, pedido);
-
-
-        if(itensPedido.isEmpty()){
-            throw  new EntityNotFoundException("Não é possivel criar pedido sem itens.");
+        if (itensPedido.isEmpty()) {
+            throw new EntityNotFoundException("Não é possivel criar pedido sem itens.");
         }
+        pedido.setItensPedido(itensPedido);
+
+        BigDecimal total = pedido.calcularTotal();
+        pedido.setTotal(total != null ? total : BigDecimal.ZERO);
+
+        Pedido pedidoSalvo = pedidoRepository.save(pedido);
 
         List<Pagamento> pagamentos = processarPagamentos(pedidoDTO, pedido, caixaAtivo);
         pedidoSalvo.setPagamentos(pagamentos);
 
-        pedidoSalvo.setItensPedido(itensPedido);
-        var total = pedidoSalvo.calcularTotal();
-
-        validarTotalPagamento(pagamentos, total);
+        BigDecimal troco = pedidoSalvo.validarTotalPagamento(pagamentos, total);
 
         atualizarCaixa(caixaAtivo);
-        return convertObjectToDto(pedidoRepository.save(pedidoSalvo));
+        return convertObjectToDto(pedidoRepository.save(pedidoSalvo), troco);
+    }
+
+    public List<ResponsePedidoDTO> findAll() {
+        return pedidoRepository.findAll().stream()
+                .map(this::convertObjectToDto).collect(Collectors.toList());
     }
 
     private ResponsePedidoDTO convertObjectToDto(Pedido pedido) {
+        return convertObjectToDto(pedido, BigDecimal.ZERO);
+    }
+
+
+    private ResponsePedidoDTO convertObjectToDto(Pedido pedido, BigDecimal troco) {
         List<ResponseItemPedidoDTO> itemPedidoDTO = pedido.getItensPedido().stream()
                 .map(p -> new ResponseItemPedidoDTO(p.getProduto().getNome(),
                         p.getProduto().getVenda(), p.getQuantidade())).collect(Collectors.toList());
@@ -71,7 +82,7 @@ public class PedidoService {
                 .map(pg -> new RequestPagamentoPedidoDTO(pg.getTipoPagamento(), pg.getValor())).collect(Collectors.toList());
 
         return new ResponsePedidoDTO(pedido.getDataHoraEmissao(), itemPedidoDTO, pedido.getTotal(),
-                pedido.getStatusPedido(), pedido.getObservacao(), pagamentoPedidoDTO);
+                pedido.getStatusPedido(), pedido.getObservacao(), pagamentoPedidoDTO, troco != null ? troco : BigDecimal.ZERO);
     }
 
     private List<ItemPedido> processarItens(RequestPedidoDTO pedidoDTO, Pedido pedido) {
@@ -85,6 +96,8 @@ public class PedidoService {
                     itemPedido.setProduto(produto);
                     itemPedido.setQuantidade(dto.quantidade());
                     itemPedido.setPedido(pedido);
+
+                    pedido.getItensPedido().add(itemPedido);
                     return itemPedido;
                 }).collect(Collectors.toList());
     }
@@ -99,14 +112,6 @@ public class PedidoService {
             pagamento.setOperacaoCaixa(operacaoCaixa);
             return pagamento;
         }).collect(Collectors.toList());
-    }
-
-    private void validarTotalPagamento(List<Pagamento> pagamentos, BigDecimal totalPedido) {
-        BigDecimal totalPagamentos = pagamentos.stream()
-                .map(Pagamento::getValor).reduce(BigDecimal.ZERO, BigDecimal::add);
-        if (totalPagamentos.compareTo(totalPedido) != 0) {
-            throw new RuntimeException("Valor dos pagamentos não confere com total do pedido");
-        }
     }
 
     private void atualizarCaixa(OperacaoCaixa operacaoCaixa) {

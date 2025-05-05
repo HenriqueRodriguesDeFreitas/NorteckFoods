@@ -9,5 +9,5 @@ import java.util.List;
 
 public record ResponsePedidoDTO(LocalDateTime emissao, List<ResponseItemPedidoDTO> itens,
                                 BigDecimal total, StatusPedido status,
-                                String observacao, List<RequestPagamentoPedidoDTO> pagamentos) {
+                                String observacao, List<RequestPagamentoPedidoDTO> pagamentos, BigDecimal troco) {
 }

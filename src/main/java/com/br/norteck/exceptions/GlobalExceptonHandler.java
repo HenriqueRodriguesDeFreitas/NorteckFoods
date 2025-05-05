@@ -5,6 +5,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
+
 @RestControllerAdvice // Indica que esta classe trata exceções globalmente
 public class GlobalExceptonHandler {
 
@@ -24,5 +28,15 @@ public class GlobalExceptonHandler {
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<String> handleRuntimeException(RuntimeException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage()); // HTTP 400
+    }
+
+    @ExceptionHandler(PagamentoInvalidoException.class)
+    public ResponseEntity<Map<String, Object>> handlePagamentoInvalido(PagamentoInvalidoException ex){
+        Map<String, Object> erro = new HashMap<>();
+        erro.put("timestamp", LocalDateTime.now());
+        erro.put("status", HttpStatus.BAD_REQUEST.value());
+        erro.put("erro", "Pagamento invalido");
+        erro.put("mensagem", ex.getMessage());
+    return ResponseEntity.badRequest().body(erro);
     }
 }

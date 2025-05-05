@@ -19,7 +19,6 @@ public class ItemPedido {
 
     @ManyToOne
     @JoinColumn(name = "produto_id", nullable = false)
-    @JsonIgnore
     private Produto produto;
 
     @ManyToOne
@@ -61,6 +60,7 @@ public class ItemPedido {
     public void setPedido(Pedido pedido) {
         this.pedido = pedido;
     }
+
 
 
 }
