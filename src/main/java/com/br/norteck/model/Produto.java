@@ -37,7 +37,7 @@ public class Produto {
     private List<IngredienteDoProduto> produtoDosIngredientes = new ArrayList<>();
 
     @OneToMany(mappedBy = "produto")
-    private List<Pedido> pedidos;
+    private List<ItemPedido> itemPedido;
 
     public Produto() {
     }
@@ -146,6 +146,11 @@ public class Produto {
         return this.venda;
     }
 
+    public List<ItemPedido> getItemPedido() {
+        return itemPedido;
+    }
 
-
+    public void setItemPedido(List<ItemPedido> itemPedido) {
+        this.itemPedido = itemPedido;
+    }
 }

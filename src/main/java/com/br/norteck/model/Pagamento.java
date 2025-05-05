@@ -4,6 +4,7 @@ import com.br.norteck.model.enums.TipoPagamento;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Entity
 @Table(name = "tb_pagamento")
@@ -23,6 +24,10 @@ public class Pagamento {
     @ManyToOne
     @JoinColumn(name = "pedido_id", nullable = false)
     private Pedido pedido;
+
+    @ManyToOne
+    @JoinColumn(name = "operacaocaixa_id")
+    private OperacaoCaixa operacaoCaixa;
 
 
     public Pagamento(){}
