@@ -10,4 +10,6 @@ public interface OperacaoCaixaRepository extends JpaRepository<OperacaoCaixa, In
     Optional<OperacaoCaixa> findByStatusCaixa(StatusCaixa statusCaixa);
 
     boolean existsByStatusCaixa(StatusCaixa statusCaixa);
+
+    Optional<OperacaoCaixa> findTopByStatusCaixaOrderByDataFechamentoDesc(StatusCaixa statusCaixa);
 }

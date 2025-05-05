@@ -20,8 +20,19 @@ public class OperacaoCaixaController {
         return ResponseEntity.ok(operacaoCaixaService.aberturaCaixa(aberturaCaixaDTO));
     }
 
+    @PutMapping("/fecharCaixa/{id}")
+    public ResponseEntity<?> fecharCaixa(@PathVariable("id") Integer id){
+        return ResponseEntity.ok(operacaoCaixaService.fechamentoCaixa(id));
+    }
+
+    @PutMapping
+    public ResponseEntity<?> reabrirCaixa(){
+        return ResponseEntity.ok(operacaoCaixaService.reaberturaCaixa());
+    }
+
     @GetMapping
     public ResponseEntity<List<?>> findAllCaixas(){
         return ResponseEntity.ok(operacaoCaixaService.findAll());
     }
+
 }

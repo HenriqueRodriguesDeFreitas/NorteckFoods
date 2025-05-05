@@ -35,8 +35,6 @@ public class Pedido {
     @OneToMany(mappedBy = "pedido")
     private List<Pagamento> pagamentos = new ArrayList<>();
 
-
-
     public Pedido() {
     }
 
