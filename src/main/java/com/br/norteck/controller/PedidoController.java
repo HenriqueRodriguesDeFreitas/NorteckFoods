@@ -3,6 +3,7 @@ package com.br.norteck.controller;
 import com.br.norteck.dtos.request.RequestPedidoDTO;
 import com.br.norteck.dtos.response.ResponsePedidoDTO;
 import com.br.norteck.service.PedidoService;
+import org.apache.coyote.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -22,6 +23,12 @@ public class PedidoController {
     @PostMapping
     public ResponseEntity<?> criarPedido(@RequestBody RequestPedidoDTO pedidoDTO) {
         return ResponseEntity.ok(pedidoService.save(pedidoDTO));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> atualizarPedido(@PathVariable("id")Integer id,
+                                             @RequestBody RequestPedidoDTO pedidoDTO){
+        return ResponseEntity.ok(pedidoService.update(id, pedidoDTO));
     }
 
     @GetMapping

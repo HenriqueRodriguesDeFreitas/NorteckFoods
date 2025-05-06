@@ -30,6 +30,11 @@ public class GlobalExceptonHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage()); // HTTP 400
     }
 
+    @ExceptionHandler(PedidoStatusInvalidoException.class)
+    public ResponseEntity<?> handlePedidoStatusException(PedidoStatusInvalidoException ex){
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+    }
+
     @ExceptionHandler(PagamentoInvalidoException.class)
     public ResponseEntity<Map<String, Object>> handlePagamentoInvalido(PagamentoInvalidoException ex){
         Map<String, Object> erro = new HashMap<>();
