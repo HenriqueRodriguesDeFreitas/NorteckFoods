@@ -14,7 +14,6 @@ import com.br.norteck.repository.IngredienteDoProdutoRepository;
 import com.br.norteck.repository.IngredienteRepository;
 import com.br.norteck.repository.ProdutoRepository;
 import com.br.norteck.service.util.MessageError;
-import org.aspectj.bridge.Message;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -78,7 +77,7 @@ public class ProdutoService {
 
         if (produtoDTO.custo().compareTo(BigDecimal.ZERO) <= 0) {
             produtoSalvo.calcularCustoProduto();
-        } else{
+        } else {
             produtoSalvo.setCusto(produtoDTO.custo());
         }
 
@@ -141,14 +140,14 @@ public class ProdutoService {
 
         if (produtoDTO.custo().compareTo(BigDecimal.ZERO) <= 0) {
             produto.calcularCustoProduto();
-        }else{
-        produto.setCusto(produtoDTO.custo());
+        } else {
+            produto.setCusto(produtoDTO.custo());
         }
 
         if (produtoDTO.venda().compareTo(BigDecimal.ZERO) <= 0) {
             produto.calcularVendaProduto();
-        }else{
-        produto.setVenda(produtoDTO.venda());
+        } else {
+            produto.setVenda(produtoDTO.venda());
         }
 
         return convertObjectToDto(produtoRepository.save(produto));

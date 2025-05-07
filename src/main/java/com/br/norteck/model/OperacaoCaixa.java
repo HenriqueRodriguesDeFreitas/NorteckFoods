@@ -51,6 +51,50 @@ public class OperacaoCaixa {
         this.statusCaixa = statusCaixa;
     }
 
+    public void inicializarTotaisAbertura() {
+        this.saldoDinheiro = BigDecimal.ZERO;
+        this.saldoDebito = BigDecimal.ZERO;
+        this.saldoCredito = BigDecimal.ZERO;
+        this.saldoPix = BigDecimal.ZERO;
+        this.saldoFinal = this.saldoInicial;
+    }
+
+    public void atualizarTotais(List<Pagamento> pagamentosAntigos, List<Pagamento> pagamentosNovos) {
+        // Primeiro remove os valores antigos
+        for (Pagamento p : pagamentosAntigos) {
+            switch (p.getTipoPagamento()) {
+                case DINHEIRO -> this.saldoDinheiro = saldoDinheiro.subtract(p.getValor());
+                case DEBITO -> this.saldoDebito = saldoDebito.subtract(p.getValor());
+                case CREDITO -> this.saldoCredito = saldoCredito.subtract(p.getValor());
+                case PIX -> this.saldoPix = saldoPix.subtract(p.getValor());
+            }
+        }
+
+        // Depois adiciona os novos valores
+        for (Pagamento p : pagamentosNovos) {
+            switch (p.getTipoPagamento()) {
+                case DINHEIRO -> this.saldoDinheiro = saldoDinheiro.add(p.getValor());
+                case DEBITO -> this.saldoDebito = saldoDebito.add(p.getValor());
+                case CREDITO -> this.saldoCredito = saldoCredito.add(p.getValor());
+                case PIX -> this.saldoPix = saldoPix.add(p.getValor());
+            }
+        }
+
+        this.saldoFinal = saldoInicial.add(saldoDinheiro).add(saldoDebito).add(saldoCredito).add(saldoPix);
+    }
+
+    public void sangriaCaixa() {
+        for (Pagamento p : pagamentos) {
+            switch (p.getTipoPagamento()) {
+                case DINHEIRO -> this.saldoDinheiro = saldoDinheiro.subtract(p.getValor());
+                case DEBITO -> this.saldoDebito = saldoDebito.subtract(p.getValor());
+                case CREDITO -> this.saldoCredito = saldoCredito.subtract(p.getValor());
+                case PIX -> this.saldoPix = saldoPix.subtract(p.getValor());
+            }
+        }
+        this.saldoFinal = saldoFinal.subtract(saldoDinheiro).subtract(saldoDebito).subtract(saldoCredito).subtract(saldoPix);
+    }
+
     public Integer getId() {
         return id;
     }
@@ -139,47 +183,5 @@ public class OperacaoCaixa {
         this.statusCaixa = statusCaixa;
     }
 
-    public void inicializarTotaisAbertura() {
-        this.saldoDinheiro = BigDecimal.ZERO;
-        this.saldoDebito = BigDecimal.ZERO;
-        this.saldoCredito = BigDecimal.ZERO;
-        this.saldoPix = BigDecimal.ZERO;
-        this.saldoFinal = this.saldoInicial;
-    }
 
-    public void atualizarTotais(List<Pagamento> pagamentosAntigos, List<Pagamento> pagamentosNovos) {
-        // Primeiro remove os valores antigos
-        for (Pagamento p : pagamentosAntigos) {
-            switch (p.getTipoPagamento()) {
-                case DINHEIRO -> this.saldoDinheiro = saldoDinheiro.subtract(p.getValor());
-                case DEBITO -> this.saldoDebito = saldoDebito.subtract(p.getValor());
-                case CREDITO -> this.saldoCredito = saldoCredito.subtract(p.getValor());
-                case PIX -> this.saldoPix = saldoPix.subtract(p.getValor());
-            }
-        }
-
-        // Depois adiciona os novos valores
-        for (Pagamento p : pagamentosNovos) {
-            switch (p.getTipoPagamento()) {
-                case DINHEIRO -> this.saldoDinheiro = saldoDinheiro.add(p.getValor());
-                case DEBITO -> this.saldoDebito = saldoDebito.add(p.getValor());
-                case CREDITO -> this.saldoCredito = saldoCredito.add(p.getValor());
-                case PIX -> this.saldoPix = saldoPix.add(p.getValor());
-            }
-        }
-
-        this.saldoFinal = saldoInicial.add(saldoDinheiro).add(saldoDebito).add(saldoCredito).add(saldoPix);
-    }
-
-    public void sangriaCaixa() {
-        for (Pagamento p : pagamentos) {
-            switch (p.getTipoPagamento()) {
-                case DINHEIRO -> this.saldoDinheiro = saldoDinheiro.subtract(p.getValor());
-                case DEBITO -> this.saldoDebito = saldoDebito.subtract(p.getValor());
-                case CREDITO -> this.saldoCredito = saldoCredito.subtract(p.getValor());
-                case PIX -> this.saldoPix = saldoPix.subtract(p.getValor());
-            }
-        }
-        this.saldoFinal = saldoFinal.subtract(saldoDinheiro).subtract(saldoDebito).subtract(saldoCredito).subtract(saldoPix);
-    }
 }
