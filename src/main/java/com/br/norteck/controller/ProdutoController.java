@@ -5,6 +5,7 @@ import com.br.norteck.service.ProdutoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,6 +22,7 @@ public class ProdutoController {
         return ResponseEntity.ok(produtoService.save(produtoDTO));
     }
 
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'GERENTE')")
     @GetMapping
     public ResponseEntity<List<?>> findAll() {
         return ResponseEntity.ok(produtoService.findAll());
