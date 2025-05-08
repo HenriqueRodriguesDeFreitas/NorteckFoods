@@ -16,8 +16,12 @@ public class SecurityConfiguration {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
         return http
                 .csrf(AbstractHttpConfigurer::disable)
-                .httpBasic(Customizer.withDefaults())
-                .formLogin(Customizer.withDefaults())
+                //.httpBasic(Customizer.withDefaults())
+                //.formLogin(Customizer.withDefaults())
+                //define que a pagina configurada na rota /login do WebConfiguration seja a pagina de login
+                .formLogin(configurer ->{
+                    configurer.loginPage("/login").permitAll();
+                })
                 .authorizeHttpRequests(authorize ->{
                     authorize.anyRequest().authenticated();
                 })

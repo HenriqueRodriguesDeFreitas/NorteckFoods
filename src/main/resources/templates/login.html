@@ -5,7 +5,7 @@
     <title>tela de Login - Thymeleaf</title>
 </head>
 <body>
-<form method="post" action="@{/login}">
+<form method="post" th:action="@{/login}">
     <p>
         <label for="username">Usuario</label>
         <input type="text" name="username" id="username" placeholder="Digite o usuario">
