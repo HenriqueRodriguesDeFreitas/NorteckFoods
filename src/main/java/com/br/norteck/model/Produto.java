@@ -33,7 +33,7 @@ public class Produto {
     @JoinColumn(name = "categoria_id")
     private Categoria categoria;
 
-    @OneToMany( mappedBy = "produto",cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @OneToMany( mappedBy = "produto",cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE})
     private List<IngredienteDoProduto> produtoDosIngredientes = new ArrayList<>();
 
     @OneToMany(mappedBy = "produto")

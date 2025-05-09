@@ -2,6 +2,7 @@ package com.br.norteck.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -29,6 +30,9 @@ public class SecurityConfiguration {
                     configurer.loginPage("/login").permitAll();
                 })
                 .authorizeHttpRequests(authorize -> {
+                    authorize.requestMatchers(HttpMethod.GET,"/produtos").hasRole("USER");
+                    authorize.requestMatchers(HttpMethod.DELETE,"/produtos/**").hasRole("USER");
+                    authorize.requestMatchers("/ingredientes/**").hasRole("ADMIN");
                     authorize.anyRequest().authenticated();
                 })
                 .build();

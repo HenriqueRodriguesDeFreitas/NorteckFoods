@@ -22,7 +22,6 @@ public class ProdutoController {
         return ResponseEntity.ok(produtoService.save(produtoDTO));
     }
 
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'GERENTE')")
     @GetMapping
     public ResponseEntity<List<?>> findAll() {
         return ResponseEntity.ok(produtoService.findAll());
