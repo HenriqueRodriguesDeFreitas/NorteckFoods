@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import org.hibernate.annotations.Type;
 
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "tb_usuario")
@@ -12,11 +13,11 @@ public class Usuario {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private Integer id;
+    private UUID id;
 
+    private String email;
     private String login;
     private String password;
-    private String email;
 
     @Type(ListArrayType.class) //Difiniz um tipo, no caso aqui vai fazer a tradução de list para array
     @Column(columnDefinition = "varchar[]")
@@ -30,7 +31,7 @@ public class Usuario {
         this.email = email;
     }
 
-    public Integer getId() {
+    public UUID getId() {
         return id;
     }
 
@@ -56,5 +57,13 @@ public class Usuario {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public List<String> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(List<String> roles) {
+        this.roles = roles;
     }
 }

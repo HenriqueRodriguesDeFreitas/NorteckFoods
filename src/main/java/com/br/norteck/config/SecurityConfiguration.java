@@ -1,5 +1,7 @@
 package com.br.norteck.config;
 
+import com.br.norteck.security.CustomUserDetailsService;
+import com.br.norteck.service.UsuarioService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -33,6 +35,7 @@ public class SecurityConfiguration {
                     authorize.requestMatchers(HttpMethod.GET,"/produtos").hasRole("USER");
                     authorize.requestMatchers(HttpMethod.DELETE,"/produtos/**").hasRole("USER");
                     authorize.requestMatchers("/ingredientes/**").hasRole("ADMIN");
+                    authorize.requestMatchers(HttpMethod.POST, "/usuarios").permitAll();
                     authorize.anyRequest().authenticated();
                 })
                 .build();
@@ -44,18 +47,19 @@ public class SecurityConfiguration {
     }
 
     @Bean
-    public UserDetailsService userDetailsService(PasswordEncoder encoder) {
-        UserDetails user1 = User.builder()
-                .username("Usuario")
-                .password(encoder.encode("123"))
-                .roles("USER")
-                .build();
-
-        UserDetails user2 = User.builder()
-                .username("admin")
-                .password(encoder.encode("321"))
-                .roles("ADMIN")
-                .build();
-        return new InMemoryUserDetailsManager(user1, user2);
+    public UserDetailsService userDetailsService(UsuarioService usuarioService) {
+//        UserDetails user1 = User.builder()
+//                .username("Usuario")
+//                .password(encoder.encode("123"))
+//                .roles("USER")
+//                .build();
+//
+//        UserDetails user2 = User.builder()
+//                .username("admin")
+//                .password(encoder.encode("321"))
+//                .roles("ADMIN")
+//                .build();
+    //    return new InMemoryUserDetailsManager(user1, user2);
+    return new CustomUserDetailsService(usuarioService);
     }
 }
