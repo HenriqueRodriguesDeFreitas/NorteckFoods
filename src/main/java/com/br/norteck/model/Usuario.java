@@ -14,7 +14,7 @@ public class Usuario {
     @GeneratedValue(strategy = GenerationType.UUID)
     private Integer id;
 
-    private String username;
+    private String login;
     private String password;
     private String email;
 
@@ -24,8 +24,8 @@ public class Usuario {
 
     public Usuario(){}
 
-    public Usuario(String username, String password, String email) {
-        this.username = username;
+    public Usuario(String login, String password, String email) {
+        this.login = login;
         this.password = password;
         this.email = email;
     }
@@ -34,12 +34,12 @@ public class Usuario {
         return id;
     }
 
-    public String getUsername() {
-        return username;
+    public String getLogin() {
+        return login;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
+    public void setLogin(String login) {
+        this.login = login;
     }
 
     public String getPassword() {

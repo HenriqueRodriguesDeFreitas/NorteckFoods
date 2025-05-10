@@ -45,7 +45,6 @@ public class SecurityConfiguration {
 
     @Bean
     public UserDetailsService userDetailsService(PasswordEncoder encoder) {
-
         UserDetails user1 = User.builder()
                 .username("Usuario")
                 .password(encoder.encode("123"))
