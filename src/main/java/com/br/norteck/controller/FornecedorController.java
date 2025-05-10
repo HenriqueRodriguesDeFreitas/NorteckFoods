@@ -5,18 +5,21 @@ import com.br.norteck.service.FornecedorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/suppliers")
+@PreAuthorize("hasAnyRole('GERENTE', 'ADMIN')")
 public class FornecedorController {
 
     @Autowired
     private FornecedorService fornecedorService;
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('GERENTE', 'ADMIN')")
     public ResponseEntity<?> save(@RequestBody RequestFornecedorDTO supplierDTO) {
         return ResponseEntity.status(HttpStatus.CREATED).body(fornecedorService.save(supplierDTO));
     }

@@ -20,7 +20,7 @@ public class UsuarioController {
     }
 
     @PostMapping
-    //@PreAuthorize("hasAnyRole('GERENTE', 'ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> salvar(@RequestBody UsuarioDTO dto) {
         return ResponseEntity.ok(usuarioService.salvar(dto));
     }
