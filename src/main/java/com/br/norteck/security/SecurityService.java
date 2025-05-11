@@ -4,7 +4,6 @@ import com.br.norteck.model.Usuario;
 import com.br.norteck.service.UsuarioService;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -16,10 +15,12 @@ public class SecurityService {
         this.usuarioService = usuarioService;
     }
 
-    public Usuario obterUsuarioLogado(){
+    public Usuario obterUsuarioLogado() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        String login = userDetails.getUsername();
-        return usuarioService.obterPorLogin(login);
+
+        if (authentication instanceof CustomAuthentication customAuth) {
+            return customAuth.getUsuario();
+        }
+        return null;
     }
 }
