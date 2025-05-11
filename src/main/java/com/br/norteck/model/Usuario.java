@@ -23,6 +23,12 @@ public class Usuario {
     @Column(columnDefinition = "varchar[]")
     private List<String> roles;
 
+    @OneToMany(mappedBy = "usuario")
+    private List<Pedido> pedidos;
+
+    @OneToMany(mappedBy = "usuario")
+    private List<EntradaDeNota> entradaDeNotas;
+
     public Usuario(){}
 
     public Usuario(String login, String password, String email) {

@@ -36,6 +36,10 @@ public class Pedido {
     @OneToMany(mappedBy = "pedido", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private List<Pagamento> pagamentos = new ArrayList<>();
 
+    @ManyToOne(cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "usuario_id")
+    private Usuario usuario;
+
     public Pedido() {
     }
 
@@ -100,6 +104,13 @@ public class Pedido {
         this.pagamentos = pagamentos;
     }
 
+    public Usuario getUsuario() {
+        return usuario;
+    }
+
+    public void setUsuario(Usuario usuario) {
+        this.usuario = usuario;
+    }
 
     public BigDecimal calcularTotal() {
         BigDecimal totalPedido = BigDecimal.ZERO;

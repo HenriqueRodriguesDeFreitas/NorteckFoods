@@ -40,6 +40,10 @@ public class EntradaDeNota {
     @Column(name = "total_nota", precision = 18, scale = 2)
     private BigDecimal totalNota;
 
+    @ManyToOne(cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "usuario_id")
+    private Usuario usuario;
+
     public EntradaDeNota(){}
 
     public EntradaDeNota(Fornecedor fornecedor, List<ItemEntradaDeNota> itemEntradaDeNotaList, LocalDate dataEmissao, LocalDate dataEntrada, Integer numeroNota, Integer serieNota, BigDecimal desconto, BigDecimal totalNota) {
@@ -68,7 +72,6 @@ public class EntradaDeNota {
         this.totalNota = total.setScale(2, RoundingMode.HALF_DOWN);
         return total;
     }
-
 
     public Integer getId() {
         return id;
@@ -144,5 +147,27 @@ public class EntradaDeNota {
         this.totalNota = totalNota;
     }
 
+    public Fornecedor getFornecedor() {
+        return fornecedor;
+    }
 
+    public void setFornecedor(Fornecedor fornecedor) {
+        this.fornecedor = fornecedor;
+    }
+
+    public List<ItemEntradaDeNota> getItemEntradaDeNotaList() {
+        return itemEntradaDeNotaList;
+    }
+
+    public void setItemEntradaDeNotaList(List<ItemEntradaDeNota> itemEntradaDeNotaList) {
+        this.itemEntradaDeNotaList = itemEntradaDeNotaList;
+    }
+
+    public Usuario getUsuario() {
+        return usuario;
+    }
+
+    public void setUsuario(Usuario usuario) {
+        this.usuario = usuario;
+    }
 }

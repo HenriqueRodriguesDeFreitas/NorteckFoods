@@ -13,6 +13,7 @@ import com.br.norteck.repository.ItemEntradaDeNotaRepository;
 import com.br.norteck.repository.EntradaDeNotaRepository;
 import com.br.norteck.repository.IngredienteRepository;
 import com.br.norteck.repository.FornecedorRepository;
+import com.br.norteck.security.SecurityService;
 import com.br.norteck.service.util.MessageError;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -25,14 +26,22 @@ import java.util.stream.Collectors;
 @Service
 public class EntradaDeNotaService {
 
-    @Autowired
-    private EntradaDeNotaRepository entradaDeNotaRepository;
-    @Autowired
-    private ItemEntradaDeNotaRepository itemEntradaDeNotaRepository;
-    @Autowired
-    private FornecedorRepository fornecedorRepository;
-    @Autowired
-    private IngredienteRepository ingredienteRepository;
+    private final EntradaDeNotaRepository entradaDeNotaRepository;
+    private final ItemEntradaDeNotaRepository itemEntradaDeNotaRepository;
+    private final FornecedorRepository fornecedorRepository;
+    private final IngredienteRepository ingredienteRepository;
+    private final SecurityService securityService;
+
+    public EntradaDeNotaService(EntradaDeNotaRepository entradaDeNotaRepository,
+                                ItemEntradaDeNotaRepository itemEntradaDeNotaRepository,
+                                FornecedorRepository fornecedorRepository,
+                                IngredienteRepository ingredienteRepository, SecurityService securityService) {
+        this.entradaDeNotaRepository = entradaDeNotaRepository;
+        this.itemEntradaDeNotaRepository = itemEntradaDeNotaRepository;
+        this.fornecedorRepository = fornecedorRepository;
+        this.ingredienteRepository = ingredienteRepository;
+        this.securityService = securityService;
+    }
 
     @Transactional
     public ResponseGoodsReceiptDTO save(RequestEntradaDeNotaDto goodsReceiptDto) {
@@ -47,6 +56,8 @@ public class EntradaDeNotaService {
             throw new ConflictException("Este fornecedor já possui notas com essa numeração");
         }
 
+        var usuario = securityService.obterUsuarioLogado();
+
         EntradaDeNota entradaDeNota = new EntradaDeNota();
         entradaDeNota.setSupplier(fornecedor);
         entradaDeNota.setDataEmissao(goodsReceiptDto.issueDate());
@@ -54,6 +65,7 @@ public class EntradaDeNotaService {
         entradaDeNota.setNumeroNota(goodsReceiptDto.noteNumber());
         entradaDeNota.setSerieNota(goodsReceiptDto.serialNumber());
         entradaDeNota.setDesconto(goodsReceiptDto.discount());
+        entradaDeNota.setUsuario(usuario);
 
         var goodsReceipt1Save = entradaDeNotaRepository.save(entradaDeNota);
 

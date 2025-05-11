@@ -22,6 +22,7 @@ public class Bairro {
     @JoinColumn(name = "city_id", nullable = false)
     private Cidade cidade;
 
+
     public Bairro(){}
 
     public Bairro(String nome, Cidade cidade) {

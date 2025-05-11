@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import com.br.norteck.dtos.request.RequestItemPedidoDTO;
 import com.br.norteck.exceptions.PedidoStatusInvalidoException;
+import com.br.norteck.security.SecurityService;
 import jakarta.persistence.SecondaryTable;
 import org.hibernate.cache.spi.support.AbstractReadWriteAccess;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,14 +37,21 @@ import com.br.norteck.repository.ProdutoRepository;
 @Service
 public class PedidoService {
 
-    @Autowired
-    private PedidoRepository pedidoRepository;
-    @Autowired
-    private ProdutoRepository produtoRepository;
-    @Autowired
-    private OperacaoCaixaRepository operacaoCaixaRepository;
-    @Autowired
-    private IngredienteRepository ingredienteRepository;
+    private final PedidoRepository pedidoRepository;
+    private final ProdutoRepository produtoRepository;
+    private final OperacaoCaixaRepository operacaoCaixaRepository;
+    private final IngredienteRepository ingredienteRepository;
+    private final SecurityService securityService;
+
+    public PedidoService(PedidoRepository pedidoRepository, ProdutoRepository produtoRepository,
+                         OperacaoCaixaRepository operacaoCaixaRepository,
+                         IngredienteRepository ingredienteRepository, SecurityService securityService) {
+        this.pedidoRepository = pedidoRepository;
+        this.produtoRepository = produtoRepository;
+        this.operacaoCaixaRepository = operacaoCaixaRepository;
+        this.ingredienteRepository = ingredienteRepository;
+        this.securityService = securityService;
+    }
 
     @Transactional
     public ResponsePedidoDTO save(RequestPedidoDTO pedidoDTO) {
@@ -53,10 +61,14 @@ public class PedidoService {
         if (pedidoDTO.itens().isEmpty()) {
             throw new EntityNotFoundException("Não é possivel criar um pedido sem nenhum item.");
         }
+
+        var usuario = securityService.obterUsuarioLogado();
+
         Pedido pedido = new Pedido();
         pedido.setStatusPedido(StatusPedido.ABERTO);
         pedido.setObservacao(pedidoDTO.observacao());
         pedido.setDataHoraEmissao();
+        pedido.setUsuario(usuario);
 
         List<ItemPedido> itensPedido = processarItens(pedidoDTO, pedido);
         if (itensPedido.isEmpty()) {
@@ -67,17 +79,16 @@ public class PedidoService {
         BigDecimal total = pedido.calcularTotal();
         pedido.setTotal(total != null ? total : BigDecimal.ZERO);
 
-        Pedido pedidoSalvo = pedidoRepository.save(pedido);
-
         List<Pagamento> pagamentos = processarPagamentos(pedidoDTO, pedido, caixaAtivo);
-        pedidoSalvo.setPagamentos(pagamentos);
+        pedido.setPagamentos(pagamentos);
 
-        BigDecimal troco = pedidoSalvo.validarTotalPagamento(pagamentos, total);
-
+        BigDecimal troco = pedido.validarTotalPagamento(pagamentos, total);
         atualizarCaixa(caixaAtivo, List.of(), pagamentos);
-        return convertObjectToDto(pedidoRepository.save(pedidoSalvo), troco);
+
+        return convertObjectToDto(pedidoRepository.save(pedido), troco);
     }
 
+    @Transactional
     public ResponsePedidoDTO update(Integer id, RequestPedidoDTO pedidoDTO) {
         OperacaoCaixa caixaAtivo = operacaoCaixaRepository.findByStatusCaixa(StatusCaixa.ABERTO)
                 .orElseThrow(() -> new EntityNotFoundException("Não existem caixas abertos."));
@@ -96,7 +107,8 @@ public class PedidoService {
         if (pedidoDTO.pagamentos() == null || pedidoDTO.pagamentos().isEmpty()) {
             throw new IllegalArgumentException("O pedido deve ter pelo menos uma forma de pagamento");
         }
-
+        var usuario = securityService.obterUsuarioLogado();
+        pedido.setUsuario(usuario);
 
         List<ItemPedido> itensRemovidos = identificarItensRemovidos(pedido, pedidoDTO);
 
@@ -195,8 +207,6 @@ public class PedidoService {
             return pagamento;
         }).collect(Collectors.toList());
     }
-
-
     private void atualizarCaixa(OperacaoCaixa operacaoCaixa, List<Pagamento> pagamentosAntigos, List<Pagamento> pagamentosNovos) {
         operacaoCaixa.atualizarTotais(pagamentosAntigos, pagamentosNovos);
         operacaoCaixaRepository.save(operacaoCaixa);
