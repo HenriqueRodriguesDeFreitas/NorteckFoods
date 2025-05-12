@@ -17,14 +17,13 @@ public class UsuarioService {
         this.encoder = encoder;
     }
 
-    public UsuarioDTO salvar(UsuarioDTO usuarioDTO){
+    public Usuario salvar(Usuario usuario){
         Usuario newUsuario = new Usuario();
-        newUsuario.setEmail(usuarioDTO.email());
-        newUsuario.setLogin(usuarioDTO.login());
-        newUsuario.setPassword(encoder.encode(usuarioDTO.password()));
-        newUsuario.setRoles(usuarioDTO.roles());
-
-        return convertObjectToDto(usuarioRespository.save(newUsuario));
+        newUsuario.setEmail(usuario.getEmail());
+        newUsuario.setLogin(usuario.getLogin());
+        newUsuario.setPassword(encoder.encode(usuario.getPassword()));
+        newUsuario.setRoles(usuario.getRoles());
+        return usuarioRespository.save(newUsuario);
     }
 
     public Usuario obterPorLogin(String login){
