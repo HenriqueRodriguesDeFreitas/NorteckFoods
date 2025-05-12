@@ -31,6 +31,10 @@ public class UsuarioService {
         return usuarioRespository.findByLogin(login);
     }
 
+    public Usuario obterPorEmail(String email){
+        return usuarioRespository.findByEmail(email);
+    }
+
     private UsuarioDTO convertObjectToDto(Usuario usuario){
         return new UsuarioDTO(usuario.getEmail(), usuario.getLogin(), usuario.getPassword(),usuario.getRoles());
     }

@@ -1,6 +1,7 @@
 package com.br.norteck.config;
 
 import com.br.norteck.security.CustomUserDetailsService;
+import com.br.norteck.security.LoginSocialSuccessHandler;
 import com.br.norteck.service.UsuarioService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,23 +23,26 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfiguration {
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http, LoginSocialSuccessHandler successHandler) throws Exception {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .httpBasic(Customizer.withDefaults())
-                .formLogin(Customizer.withDefaults())
 
                 //define que a pagina configurada na rota /login do WebConfiguration seja a pagina de login
-//                .formLogin(configurer -> {
-//                    configurer.loginPage("/login").permitAll();
-//                })
+                .formLogin(configurer -> {
+                    configurer.loginPage("/login").permitAll();
+                })
 
                 .authorizeHttpRequests(authorize -> {
                     authorize.requestMatchers("/login/**").permitAll();
                     authorize.requestMatchers(HttpMethod.POST, "/usuarios").permitAll();
                     authorize.anyRequest().authenticated();
                 })
-                .oauth2Login(Customizer.withDefaults())
+                .oauth2Login(oauth2 -> {
+                    oauth2.loginPage("/login");
+                    oauth2.successHandler(successHandler);
+                })
                 .build();
     }
 
@@ -47,7 +51,7 @@ public class SecurityConfiguration {
         return new BCryptPasswordEncoder(10);
     }
 
-//    @Bean
+    //    @Bean
     public UserDetailsService userDetailsService(UsuarioService usuarioService) {
 //        UserDetails user1 = User.builder()
 //                .username("Usuario")
@@ -60,7 +64,7 @@ public class SecurityConfiguration {
 //                .password(encoder.encode("321"))
 //                .roles("ADMIN")
 //                .build();
-    //    return new InMemoryUserDetailsManager(user1, user2);
-    return new CustomUserDetailsService(usuarioService);
+        //    return new InMemoryUserDetailsManager(user1, user2);
+        return new CustomUserDetailsService(usuarioService);
     }
 }
